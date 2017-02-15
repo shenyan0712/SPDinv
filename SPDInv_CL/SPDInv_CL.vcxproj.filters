@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="cl_cholesky.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="cl_common.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="cl_trigmat_inv.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="cl_SPD_inv.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="cl_trigmat_mul.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="cl_cholesky_mod.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="cl_cholmod_blk.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="cl_common.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="cl_spd_inv.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="spd_inv.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\CL_files\cholesky_m1.cl">
+      <Filter>CL_files</Filter>
+    </None>
+    <None Include="..\CL_files\spd_inv.cl">
+      <Filter>CL_files</Filter>
+    </None>
+    <None Include="..\CL_files\trigMat_inv_m1.cl">
+      <Filter>CL_files</Filter>
+    </None>
+    <None Include="..\CL_files\trigMat_mul.cl">
+      <Filter>CL_files</Filter>
+    </None>
+    <None Include="..\CL_files\cholesky_mod.cl">
+      <Filter>CL_files</Filter>
+    </None>
+    <None Include="..\CL_files\cholmod_blk.cl">
+      <Filter>CL_files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{8816d3ed-2dd8-4550-a579-bfe3138a9a14}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{c480d549-da48-4961-87da-15acd765d833}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CL_files">
+      <UniqueIdentifier>{edfb6ccd-77bd-46b3-ad8f-1054077c626d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

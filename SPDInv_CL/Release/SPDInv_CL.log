@@ -1,0 +1,19 @@
+﻿生成启动时间为 2016/12/28 23:03:42。
+     1>项目“E:\sync_directory\workspace\SPDInv\SPDInv_CL\SPDInv_CL.vcxproj”在节点 2 上(Build 个目标)。
+     1>Link:
+         D:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"E:\sync_directory\workspace\SPDInv\Release\SPDInv_cl.exe" /INCREMENTAL:NO /NOLOGO OpenCL.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"E:\sync_directory\workspace\SPDInv\Release\SPDInv_cl.pdb" /SUBSYSTEM:CONSOLE /OPT:REF /OPT:ICF /LTCG:incremental /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"E:\sync_directory\workspace\SPDInv\Release\SPDInv_cl.lib" /MACHINE:X86 /SAFESEH Release\cl_cholesky.obj
+         Release\cl_common.obj
+         Release\cl_SPD_inv.obj
+         Release\cl_trigmat_inv.obj
+         Release\cl_trigmat_mul.obj
+         Release\stdafx.obj
+         Release\main.obj
+         正在生成代码
+         All 152 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+         已完成代码的生成
+         SPDInv_CL.vcxproj -> E:\sync_directory\workspace\SPDInv\Release\SPDInv_cl.exe
+     1>已完成生成项目“E:\sync_directory\workspace\SPDInv\SPDInv_CL\SPDInv_CL.vcxproj”(Build 个目标)的操作。
+
+已成功生成。
+
+已用时间 00:00:00.77

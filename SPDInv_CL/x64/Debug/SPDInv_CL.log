@@ -1,0 +1,11 @@
+﻿C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppBuild.targets(392,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (symPosDefMatInv.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  main.cpp
+e:\sync_directory\workspace\spdinv\spdinv_cl\main.cpp(104): warning C4101: “bakMat”: 未引用的局部变量
+  cl_cholmod_blk.cpp
+e:\sync_directory\workspace\spdinv\spdinv_cl\cl_cholmod_blk.cpp(29): warning C4101: “data”: 未引用的局部变量
+  cl_cholesky.cpp
+e:\sync_directory\workspace\spdinv\spdinv_cl\cl_cholesky.cpp(37): warning C4838: 从“int”转换到“std::size_t”需要收缩转换
+  cl_SPD_inv.cpp
+  正在生成代码...
+  SPDInv_CL.vcxproj -> E:\sync_directory\workspace\SPDInv\x64\Debug\SPDInv_cl.exe
+  SPDInv_CL.vcxproj -> E:\sync_directory\workspace\SPDInv\x64\Debug\SPDInv_cl.pdb (Full PDB)
