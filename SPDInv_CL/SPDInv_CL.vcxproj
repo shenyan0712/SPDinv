@@ -77,8 +77,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(INTELOCLSDKROOT)\include;$(AMDAPPSDKROOT)\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(AMDAPPSDKROOT)\lib\x86_64;$(INTELOCLSDKROOT)\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(INTELOCLSDKROOT)\include;$(AMDAPPSDKROOT)\include;E:\sync_directory\lib_x64\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(AMDAPPSDKROOT)\lib\x86_64;$(INTELOCLSDKROOT)\lib\x64;E:\sync_directory\lib_x64\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -115,7 +115,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OpenCL.lib;clBLAS.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -169,9 +169,12 @@
     <ClCompile Include="cl_cholmod_blk.cpp" />
     <ClCompile Include="cl_common.cpp" />
     <ClCompile Include="cl_cholesky_mod.cpp" />
+    <ClCompile Include="cl_gen_rand.cpp" />
     <ClCompile Include="cl_SPD_inv.cpp" />
+    <ClCompile Include="cl_trigmat_copy.cpp" />
     <ClCompile Include="cl_trigmat_inv.cpp" />
     <ClCompile Include="cl_trigmat_mul.cpp" />
+    <ClCompile Include="data.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -184,7 +187,9 @@
     <None Include="..\CL_files\cholesky_m1.cl" />
     <None Include="..\CL_files\cholesky_mod.cl" />
     <None Include="..\CL_files\cholmod_blk.cl" />
+    <None Include="..\CL_files\gen_rand.cl" />
     <None Include="..\CL_files\spd_inv.cl" />
+    <None Include="..\CL_files\trigMat_copy.cl" />
     <None Include="..\CL_files\trigMat_inv_m1.cl" />
     <None Include="..\CL_files\trigMat_mul.cl" />
   </ItemGroup>

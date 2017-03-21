@@ -7,14 +7,13 @@ __kernel void kern_fill_rest(
 	const int mat_size);
 
 
-
-
 /*
 计算S^-1=(L^-t)*(L^-1)，
 in为上三角块矩阵L^-t
 */
 __kernel void kern_trigMat_mul(
 	__global dtype *in,
+	__global dtype *out,
 	__global dtype *diag,
 	const int mat_size)
 {
@@ -23,7 +22,6 @@ __kernel void kern_trigMat_mul(
 	int v = get_global_id(1);		//本工作项处理的元素的列号
 
 	if (v > u) return;
-
 	//(i,j)的值为in矩阵的i行与j行的乘积。
 	int u_addr, v_addr;
 	u_addr = u*mat_size + u;		//从i列开始，之前的相乘都为0

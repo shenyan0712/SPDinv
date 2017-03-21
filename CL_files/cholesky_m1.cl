@@ -34,6 +34,11 @@ __kernel void kern_cholesky_m1(
 	int v = get_local_id(1);
 	int i = j + get_group_id(0);
 
+	if (get_global_id(0) == 0 && get_global_id(1) == 0 )
+	{
+		*ret = 0.0;
+	}
+
 	//计算Tij = Aij - sum(Lik*Ljk^t)中的uv元素
 	int ijuv_addr = (i * 3 + u)*mat_size + j * 3 + v;
 	sum = mat[ijuv_addr];	//Aij_uv元素
@@ -51,7 +56,7 @@ __kernel void kern_cholesky_m1(
 	mat[ijuv_addr] = sum;		//保存Tij_uv到原矩阵
 	T[u * 3 + v] = sum;		//同时保存到本地缓存，对角线块使用
 
-	barrier(CLK_LOCAL_MEM_FENCE);		//工作组同步
+	barrier(CLK_GLOBAL_MEM_FENCE);		//工作组同步
 
 	//处理对角块,计算Lii
 	if (i == j) {
@@ -108,7 +113,7 @@ __kernel void kern_cholesky_m1(
 		}
 	}
 	//计算Lii的逆矩阵
-	barrier(CLK_LOCAL_MEM_FENCE);		//工作组同步
+	barrier(CLK_GLOBAL_MEM_FENCE);		//工作组同步
 	if (i == j) {
 		int diag_addr = j * 3 * 3 + u * 3 + v;
 		switch (u * 3 + v)
@@ -154,6 +159,7 @@ __kernel void kern_cholesky_m1(
 			break;
 		}
 	}
+	barrier(CLK_GLOBAL_MEM_FENCE);		//工作组同步
 
 	/************************************************************************/
 	/************************************************************************/
@@ -161,8 +167,7 @@ __kernel void kern_cholesky_m1(
 	if (get_global_id(0) == 0 && get_global_id(1) == 0 && get_global_size(0) >3 && *ret == 0.0)
 	{
 		//urow_base = mat_size - (j + 1) * 3;		//剩余块的总行数
-		void(^s2_wrapper)(void) =
-			^{
+		void(^s2_wrapper)(void) = ^{
 			kern_cholesky_m1_s2(mat, diagInv, ret, mat_size, j);
 		};
 		size_t    global_size[2] = { get_global_size(0) - 3, 3 };
@@ -203,7 +208,7 @@ __kernel void kern_cholesky_m1_s2(
 
 	ptr1 = (dtype3 *)&mat[urow_base];
 	ptr2 = (dtype3 *)&diagInv[vrow_base];
-	sum -= dot(*ptr1, *ptr2);
+	sum += dot(*ptr1, *ptr2);
 	//sum += mat[urow_base++] * diagInv[vrow_base++];
 	//sum += mat[urow_base++] * diagInv[vrow_base++];
 	//sum += mat[urow_base] * diagInv[vrow_base];
@@ -212,7 +217,6 @@ __kernel void kern_cholesky_m1_s2(
 
 	mat[ijuv_addr] = sum;
 	mat[jivu_addr] = 0;
-
 
 	/***********************************************************/
 	//调用kern_cholesky_m3_s1

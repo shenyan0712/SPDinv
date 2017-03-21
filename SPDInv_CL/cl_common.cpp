@@ -42,6 +42,7 @@ void printBuf2D(FILE *file, cl_command_queue queue, cl_mem buf, int rsize, int c
 		for (int j = 0; j < csize; j++)
 		{
 			fprintf(file, "%.12lf,  ", ptr[i*csize + j]);
+			//fprintf(file, "%le\t", ptr[i*csize + j]);
 		}
 		fprintf(file, "\n");
 	}

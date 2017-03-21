@@ -28,6 +28,15 @@
     <ClCompile Include="cl_cholmod_blk.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="data.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="cl_trigmat_copy.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="cl_gen_rand.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cl_common.h">
@@ -63,6 +72,12 @@
       <Filter>CL_files</Filter>
     </None>
     <None Include="..\CL_files\cholmod_blk.cl">
+      <Filter>CL_files</Filter>
+    </None>
+    <None Include="..\CL_files\trigMat_copy.cl">
+      <Filter>CL_files</Filter>
+    </None>
+    <None Include="..\CL_files\gen_rand.cl">
       <Filter>CL_files</Filter>
     </None>
   </ItemGroup>

@@ -19,6 +19,7 @@ __kernel void kern_cholmod_blk_step3(
 	const dtype beta,
 	const dtype delta,
 	const int j);
+
 __kernel void kern_cholmod_step1(
 	__global dtype* mat,
 	__global dtype* aux,
@@ -85,7 +86,7 @@ aux ---尺寸>=3*matsize, 第一组matsize个元素存放d_j,第二组matsize个元素存放当前列
 */
 __kernel void kern_cholmod_blk(
 	__global dtype *mat,		//原始矩阵 和 结果矩阵
-	__global dtype *aux,		
+	__global dtype *aux,		//用于备份
 	__global dtype *diagInv,	//输出的Lii^-1, 可供三角矩阵求逆使用
 	__global dtype *diag,		//保存原始矩阵的对角线元素
 	__global dtype *ret,
@@ -128,12 +129,12 @@ __kernel void kern_cholmod_blk(
 	T[u * 3 + v] = sum;		//同时保存到本地缓存，对角线块使用
 	barrier(CLK_LOCAL_MEM_FENCE);		//工作组同步
 
-	//计算Ljj,  Ljj*Ljj^t=Tjj
+	//计算Ljj, 从Ljj*Ljj^t=Tjj得来
 	switch (u * 3 + v)
 	{
 	case 0:		//L00 or L(0)
 		L[0] = T[0];
-		if (L[0] <= 0) {
+		if (!isfinite(L[0]) || L[0] <= 0) {
 			*ret = 1.0; break;
 		}
 		L[0] = sqrt(L[0]);
@@ -146,10 +147,13 @@ __kernel void kern_cholmod_blk(
 	case 3:		//L10
 		L[1] = T[1 * 3 + 0] / sqrt(T[0]);
 		mat[jjuv_addr] = L[1];
+		if (!isfinite(L[1])) {
+			*ret = 1.0; break;
+		}
 		break;
 	case 4:		//L11
 		L[2] = T[1 * 3 + 1] - T[1 * 3 + 0] * T[1 * 3 + 0] / T[0];
-		if (L[2] <= 0) {
+		if (!isfinite(L[2]) || L[2] <= 0) {
 			*ret = 1.0; break;
 		}
 		L[2] = sqrt(L[2]);
@@ -160,24 +164,26 @@ __kernel void kern_cholmod_blk(
 		break;
 	case 6:		//L20 or L(3)
 		L[3] = T[2 * 3 + 0] / sqrt(T[0]);
+		if (!isfinite(L[3]) ) {
+			*ret = 1.0; break;
+		}
 		mat[jjuv_addr] = L[3];
 		break;
 	case 7:		//L21 or L(4)
 		L[4] = sqrt(T[0] / (T[0] * T[1 * 3 + 1] - T[1 * 3 + 0] * T[1 * 3 + 0]))*(T[2 * 3 + 1] - T[1 * 3 + 0] * T[2 * 3 + 0] / T[0]);
+		if (!isfinite(L[4]) ) {
+			*ret = 1.0; break;
+		}
 		mat[jjuv_addr] = L[4];
 		break;
 	case 8:		//L22 or (5)
-		//t1 = T[0] / (T[0] * T[1 * 3 + 1] - T[1 * 3 + 0] * T[1 * 3 + 0]);
-		//t2 = T[2 * 3 + 1] - T[1 * 3 + 0] * T[2 * 3 + 0] / T[0];
-		//t2 = t2*t2;
-		//L[5] = sqrt(T[2 * 3 + 2] - T[2 * 3 + 0] * T[2 * 3 + 0] / T[0] - t1*t2);
 		t1 = -T[2 * 3 + 2] * T[1 * 3 + 0] * T[1 * 3 + 0];
 		t2 = 2 * T[2 * 3 + 1] * T[1 * 3 + 0] * T[2 * 3 + 0];
 		t3 = -T[1 * 3 + 1] * T[2 * 3 + 0] * T[2 * 3 + 0];
 		t4 = T[0 * 3 + 0] * (T[1 * 3 + 1] * T[2 * 3 + 2] - T[2 * 3 + 1] * T[2 * 3 + 1]);
 		t5 = -T[1 * 3 + 0] * T[1 * 3 + 0] + T[0 * 3 + 0] * T[1 * 3 + 1];
 		L[5] = (t1 + t2 + t3 + t4) / t5;
-		if (L[5] <= 0) {
+		if (!isfinite(L[5]) || L[5] <= 0) {
 			*ret = 1.0; break;
 		}
 		L[5] = sqrt(L[5]);
@@ -217,7 +223,7 @@ __kernel void kern_cholmod_blk(
 	case 0:		//L00 or L(0)
 		t1 = 1 / L[0];
 		diagInv[diagInv_addr] = t1;
-		if (!isfinite(t1)) *ret = 1.0;
+		if (!isfinite(t1) ) *ret = 1.0;
 		break;
 	case 1:		//L01,L02
 	case 2:
@@ -226,12 +232,12 @@ __kernel void kern_cholmod_blk(
 	case 3:		//L10 or L(1)
 		t1 = -L[1] / (L[0] * L[2]);
 		diagInv[diagInv_addr] = t1;
-		if (!isfinite(t1)) *ret = 1.0;
+		if (!isfinite(t1) ) *ret = 1.0;
 		break;
 	case 4:		//L11 or L(2)
 		t1 = 1 / L[2];
 		diagInv[diagInv_addr] = t1;
-		if (!isfinite(t1)) *ret = 1.0;
+		if (!isfinite(t1) ) *ret = 1.0;
 		break;
 	case 5:		//L12
 		diagInv[diagInv_addr] = 0;
@@ -239,17 +245,17 @@ __kernel void kern_cholmod_blk(
 	case 6:		//L20 or L(3)
 		t1 = (L[1] * L[4] - L[2] * L[3]) / (L[0] * L[2] * L[5]);
 		diagInv[diagInv_addr] = t1;
-		if (!isfinite(t1)) *ret = 1.0;
+		if (!isfinite(t1) ) *ret = 1.0;
 		break;
 	case 7:		//L21 or L(4)
 		t1 = -L[4] / (L[2] * L[5]);
 		diagInv[diagInv_addr] = t1;
-		if (!isfinite(t1)) *ret = 1.0;
+		if (!isfinite(t1) ) *ret = 1.0;
 		break;
 	case 8:		//L22 or L(5)
 		t1 = 1 / L[5];
 		diagInv[diagInv_addr] = t1;
-		if (!isfinite(t1)) *ret = 1.0;
+		if (!isfinite(t1) ) *ret = 1.0;
 		break;
 	default:
 		break;
@@ -407,21 +413,22 @@ __kernel void kern_cholmod_blk_step3(
 		return;
 	}
 	if (*ret != 0.0) return;
-
+	barrier(CLK_LOCAL_MEM_FENCE);		//工作组同步
 	/***********************************************************/
+
 	//调用kern_cholmod_blk处理j+1的列块
-	if (get_global_id(0) == 0 && get_global_id(1) == 0 && get_global_size(0) >= 3 )
+	if (get_global_id(0) == 0 && get_global_id(1) == 0 && get_global_size(0) >=3 )
 	{
-		void(^s1_wrapper)(local void *, local void *) =	^ (local void *TT, local void *LL) {
+		void(^kern_wrapper)(local void *, local void *) =	^ (local void *TT, local void *LL) {
 			kern_cholmod_blk(mat,aux, diagInv,diag, ret, TT, LL, mat_size, beta, delta, j + 1);	
 		};
-		size_t    global_size[2] = { get_global_size(0), 3 };
+		size_t    global_size[2] = { 3, 3 };
 		size_t    local_size[2] = { 3,3 };
 		ndrange_t ndrange = ndrange_2D(global_size, local_size);
 		enqueue_kernel(
 		get_default_queue(),
 		CLK_ENQUEUE_FLAGS_WAIT_KERNEL,
-		ndrange, s1_wrapper,
+		ndrange, kern_wrapper,
 		(unsigned int)(3 * 3 * sizeof(dtype)),		//size of local memory TT
 		(unsigned int)(6 * sizeof(dtype))			//size of local memory LL
 		);
@@ -430,16 +437,12 @@ __kernel void kern_cholmod_blk_step3(
 }
 
 
-
-
-
-
-
-
+/******************************************************************************/
 /******************************************************************************/
 
 /*
 按单列的方式计算j*3+col列的modified cholesky
+step 1 计算d_j
 workitem size=1
 */
 __kernel void kern_cholmod_step1(
@@ -455,7 +458,7 @@ __kernel void kern_cholmod_step1(
 	const int col)
 { 
 	dtype d_j, L_jk, sum;
-	int xj = j * 3 + col;
+	int xj = j * 3 + col;		//实际的单列列号
 	int jj_addr = xj*mat_size +xj;
 
 	*ret = 0;
@@ -476,18 +479,21 @@ __kernel void kern_cholmod_step1(
 	barrier(CLK_LOCAL_MEM_FENCE);		//工作组同步
 
 	//调用step2计算C_ij,L_ij
-	if ( (mat_size - xj - 1) >0 && col<3) {
+	int remain = mat_size - (xj + 1);
+	if (remain >0 && col<3) {
+
 		void(^kern_wrapper)(void) = ^{
 			kern_cholmod_step2(mat,aux, diagInv,diag, ret, mat_size,beta,delta, j,col);
 		};
-		size_t    global_size = mat_size - xj - 1;		//处理数目为该列剩余元素
+		size_t    global_size = remain;			//处理数目为该列剩余元素
 		ndrange_t ndrange = ndrange_1D(global_size);
 		enqueue_kernel(
 			get_default_queue(),
 			CLK_ENQUEUE_FLAGS_WAIT_KERNEL,
 			ndrange, kern_wrapper);
 	}
-	else if( (mat_size - xj) ==1 && col==2) {
+	else if( remain ==0 && col==2) {
+
 		//当是整个矩阵最后一个对角元素时，调用kern_cholmod_diaginv计算j对角块列的逆
 		void(^kern_wrapper)(local void *) = ^ (local void *LL) {
 			kern_cholmod_diaginv(mat, aux, diagInv, diag, ret, LL, mat_size, beta, delta, j);
@@ -506,6 +512,7 @@ __kernel void kern_cholmod_step1(
 
 
 /*
+计算该列剩余的元素
 workitem size=mat_size-j*3-1
 */
 __kernel void kern_cholmod_step2(
@@ -521,7 +528,7 @@ __kernel void kern_cholmod_step2(
 	const int col)
 {
 	dtype d_j, L_jk, C_ij;
-	int xj = j * 3 + col;
+	int xj = j * 3 + col;		//实际的单列列号
 	int i = get_global_id(0) + xj+1;
 
 	int jj_addr = xj*mat_size + xj;
@@ -529,18 +536,25 @@ __kernel void kern_cholmod_step2(
 
 	//step 2 计算C_ij和L_ij,存到下三角, 计算临时L_ij，存到aux的第2个matsize空间
 	C_ij = mat[ij_addr];
+	barrier(CLK_LOCAL_MEM_FENCE);		//工作组同步
+
 	for (int k = 0; k < xj; k++)
 	{
-		C_ij -= mat[i*mat_size + k] * mat[xj*mat_size + k];
+		C_ij = C_ij-(mat[i*mat_size + k] * mat[xj*mat_size + k]);
 	}
 	aux[mat_size + i] = C_ij;
-	mat[ij_addr] = C_ij / mat[jj_addr];	//L_ij=C_ij/sqrt(d_j)
-	if (mat[ij_addr] > beta)		//check |L_ij|>beta
-		*ret = 1.0;
+	mat[ij_addr] = C_ij/ mat[jj_addr];	//L_ij=C_ij/sqrt(d_j)
+	//mat[ij_addr] = C_ij;
+
+	barrier(CLK_LOCAL_MEM_FENCE);		//工作组同步
+
 	mat[xj*mat_size + i] = 0;
 
+	if (mat[ij_addr] > beta)		//check |L_ij|>beta
+		*ret = 1.0;
+
 	//调用step3
-	if (get_global_id(0) == 0 && get_global_id(1) == 0 && col<3)
+	if (get_global_id(0) == 0 && col<3)
 	{
 		void(^kern_wrapper)(void) = ^{
 			kern_cholmod_step3(mat,aux, diagInv,diag, ret, mat_size,beta,delta, j,col);
@@ -633,6 +647,7 @@ __kernel void kern_cholmod_step3(
 
 
 /*
+重新计算Lij
 step4 workitem size=[mat_size-j-1]
 */
 __kernel void kern_cholmod_step4(
@@ -754,12 +769,12 @@ __kernel void kern_cholmod_diaginv(
 
 	/*********************************************************************/
 	//调用kern_cholmod_blk处理j+1的列块
-	if (get_global_id(0) == 0 && get_global_id(1) == 0 && get_global_size(0) >= 3)
+	if (get_global_id(0) == 0 && get_global_id(1) == 0 && (mat_size/3) >(j+1) )
 	{
 		void(^s1_wrapper)(local void *, local void *) = ^ (local void *TT, local void *LL) {
 			kern_cholmod_blk(mat, aux, diagInv, diag, ret, TT, LL, mat_size, beta, delta, j + 1);
 		};
-		size_t    global_size[2] = { get_global_size(0), 3 };
+		size_t    global_size[2] = { 3, 3 };
 		size_t    local_size[2] = { 3,3 };
 		ndrange_t ndrange = ndrange_2D(global_size, local_size);
 		enqueue_kernel(

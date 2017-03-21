@@ -63,7 +63,7 @@ __kernel void kern_trigMat_inv_m1(
 		barrier(CLK_GLOBAL_MEM_FENCE);
 		if (i != j) {
 			in[jivu_addr] = -tt;
-			//out[ijuv_addr] = 0;
+			//in[ijuv_addr] = 0;
 		}
 	}
 

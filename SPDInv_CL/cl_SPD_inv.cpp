@@ -36,8 +36,9 @@ void cl_SPDInv_setup(SPDInv_structPtr SPDInvPtr, int maxsize, int maxblksize)
 	//创建相关缓存
 	//##########创建输入buffer###########//
 	SPDInvPtr->buf_spd_A = clCreateBuffer(SPDInvPtr->context, CL_MEM_READ_WRITE, sizeof(dtype)*(maxsize*maxsize), NULL, &err);
-	SPDInvPtr->buf_aux = clCreateBuffer(SPDInvPtr->context, CL_MEM_READ_WRITE, sizeof(dtype)*(maxblksize*maxsize), NULL, &err);
-	SPDInvPtr->buf_backup = clCreateBuffer(SPDInvPtr->context, CL_MEM_READ_WRITE, sizeof(dtype)*(maxblksize*maxsize), NULL, &err);
+	SPDInvPtr->buf_spd_B = clCreateBuffer(SPDInvPtr->context, CL_MEM_READ_WRITE, sizeof(dtype)*(maxsize*maxsize), NULL, &err);
+	SPDInvPtr->buf_diagAux = clCreateBuffer(SPDInvPtr->context, CL_MEM_READ_WRITE, sizeof(dtype)*(maxblksize*maxsize), NULL, &err);
+	SPDInvPtr->buf_blkBackup = clCreateBuffer(SPDInvPtr->context, CL_MEM_READ_WRITE, sizeof(dtype)*(maxblksize*maxsize), NULL, &err);
 	SPDInvPtr->buf_diag = clCreateBuffer(SPDInvPtr->context, CL_MEM_READ_WRITE, sizeof(dtype)*(maxsize), NULL, &err);
 	SPDInvPtr->buf_ret = clCreateBuffer(SPDInvPtr->context, CL_MEM_READ_WRITE, sizeof(dtype), NULL, &err);
 	checkErr(err, __FILE__, __LINE__);
@@ -48,21 +49,26 @@ void cl_SPDInv_setup(SPDInv_structPtr SPDInvPtr, int maxsize, int maxblksize)
 	// 创建程序对象
 	SPDInvPtr->program = build_program(SPDInvPtr->context, SPDInvPtr->device, KERN_FILE);
 
-	SPDInvPtr->kern_mat_max = clCreateKernel(SPDInvPtr->program, "kern_mat_max", &err);
-	checkErr(err, __FILE__, __LINE__);
 	SPDInvPtr->kern_cholesky_m1 = clCreateKernel(SPDInvPtr->program, "kern_cholesky_m1", &err);
-	checkErr(err, __FILE__, __LINE__);
-	SPDInvPtr->kern_cholesky_mod = clCreateKernel(SPDInvPtr->program, "kern_cholesky_mod", &err);
-	checkErr(err, __FILE__, __LINE__);
-	SPDInvPtr->kern_cholmod_E = clCreateKernel(SPDInvPtr->program, "kern_cholmod_E", &err);
 	checkErr(err, __FILE__, __LINE__);
 	SPDInvPtr->kern_trigMat_inv_m1 = clCreateKernel(SPDInvPtr->program, "kern_trigMat_inv_m1", &err);
 	checkErr(err, __FILE__, __LINE__);
 	SPDInvPtr->kern_trigMat_mul = clCreateKernel(SPDInvPtr->program, "kern_trigMat_mul", &err);
 	checkErr(err, __FILE__, __LINE__);
-	SPDInvPtr->kern_cholmod_blk = clCreateKernel(SPDInvPtr->program, "kern_cholmod_blk", &err);
+	SPDInvPtr->kern_trigMat_copy = clCreateKernel(SPDInvPtr->program, "kern_trigMat_copy", &err);
 	checkErr(err, __FILE__, __LINE__);
 
+	SPDInvPtr->kern_cholesky_mod = clCreateKernel(SPDInvPtr->program, "kern_cholesky_mod", &err);
+	checkErr(err, __FILE__, __LINE__);
+	SPDInvPtr->kern_cholmod_E = clCreateKernel(SPDInvPtr->program, "kern_cholmod_E", &err);
+	checkErr(err, __FILE__, __LINE__);
+	SPDInvPtr->kern_cholmod_blk = clCreateKernel(SPDInvPtr->program, "kern_cholmod_blk", &err);
+	checkErr(err, __FILE__, __LINE__);
+	SPDInvPtr->kern_mat_max = clCreateKernel(SPDInvPtr->program, "kern_mat_max", &err);
+	checkErr(err, __FILE__, __LINE__);
+
+	SPDInvPtr->kern_gen_rand = clCreateKernel(SPDInvPtr->program, "kern_gen_rand", &err);
+	checkErr(err, __FILE__, __LINE__);
 }
 
 

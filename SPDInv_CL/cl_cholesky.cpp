@@ -5,7 +5,6 @@
 #include "cl_spd_inv.h"
 #include "cl_common.h"
 
-
 /*
 cholesky分解：方法1
 特性：
@@ -16,10 +15,12 @@ diagAuxBuf--辅助Buffer, >=3*matSize
 输出：
 matBuf--其下三角存放分解结果
 diagAuxBuf--存放Ljj^-1子块
+outMat!=NULL 则将分解结果拷贝到outMat
+ret= --> 0.0 good 1.0 not good
 */
 dtype cholesky_m1(cl_command_queue queue, cl_kernel kern_cholesky,
 	cl_mem matBuf, cl_mem diagAuxBuf, cl_mem retBuf,
-	int matSize, dtype *outMat, bool copyOut)
+	int matSize, dtype *outMat)
 {
 	cl_int err;
 	dtype ret;
@@ -50,7 +51,7 @@ dtype cholesky_m1(cl_command_queue queue, cl_kernel kern_cholesky,
 	checkErr(err, __FILE__, __LINE__);
 
 	// 读取结果
-	if (copyOut)
+	if (outMat!=NULL)
 	{
 		err = clEnqueueReadBuffer(queue, matBuf, CL_TRUE, 0,
 			sizeof(dtype)*matSize*matSize, outMat, 0, NULL, NULL);
@@ -58,13 +59,9 @@ dtype cholesky_m1(cl_command_queue queue, cl_kernel kern_cholesky,
 	}
 
 #if DEBUG_CHOLESKY==1
-	printf("L(cholesky):\n");
-	for (int r = 0; r < matSize; r++)
-	{
-		for (int c = 0; c < matSize; c++)
-			printf("%le\t", outMat[r*matSize + c]);
-		printf("\n");
-	}
+	printBuf2D(stdout, queue, matBuf, matSize, matSize, "L(cholesky):");
+	printBuf2D(stdout, queue, diagAuxBuf, 3, matSize, "diagInv:");
+
 #endif
 	return ret;
 }

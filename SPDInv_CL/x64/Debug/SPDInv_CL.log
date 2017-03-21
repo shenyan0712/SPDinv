@@ -1,11 +1,56 @@
-﻿C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppBuild.targets(392,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (symPosDefMatInv.vcxproj).  This can lead to incorrect clean and rebuild behavior.
-  main.cpp
-e:\sync_directory\workspace\spdinv\spdinv_cl\main.cpp(104): warning C4101: “bakMat”: 未引用的局部变量
-  cl_cholmod_blk.cpp
-e:\sync_directory\workspace\spdinv\spdinv_cl\cl_cholmod_blk.cpp(29): warning C4101: “data”: 未引用的局部变量
-  cl_cholesky.cpp
-e:\sync_directory\workspace\spdinv\spdinv_cl\cl_cholesky.cpp(37): warning C4838: 从“int”转换到“std::size_t”需要收缩转换
-  cl_SPD_inv.cpp
-  正在生成代码...
-  SPDInv_CL.vcxproj -> E:\sync_directory\workspace\SPDInv\x64\Debug\SPDInv_cl.exe
-  SPDInv_CL.vcxproj -> E:\sync_directory\workspace\SPDInv\x64\Debug\SPDInv_cl.pdb (Full PDB)
+﻿生成启动时间为 2017/3/17 0:58:32。
+     1>项目“E:\sync_directory\workspace\SPDInv_CL\SPDInv_CL\SPDInv_CL.vcxproj”在节点 2 上(Build 个目标)。
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppBuild.targets(392,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (symPosDefMatInv.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+     1>ClCompile:
+         D:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\x86_amd64\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Yc"stdafx.h" /Fp"x64\Debug\SPDInv_cl.pch" /Fo"x64\Debug\\" /Fd"x64\Debug\vc140.pdb" /Gd /TP /errorReport:prompt stdafx.cpp
+         stdafx.cpp
+         D:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\x86_amd64\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Yu"stdafx.h" /Fp"x64\Debug\SPDInv_cl.pch" /Fo"x64\Debug\\" /Fd"x64\Debug\vc140.pdb" /Gd /TP /errorReport:prompt cl_cholesky.cpp cl_cholmod_blk.cpp cl_common.cpp cl_cholesky_mod.cpp cl_gen_rand.cpp cl_SPD_inv.cpp cl_trigmat_copy.cpp cl_trigmat_inv.cpp cl_trigmat_mul.cpp data.cpp main.cpp
+         main.cpp
+     1>e:\sync_directory\workspace\spdinv_cl\spdinv_cl\main.cpp(136): warning C4244: “=”: 从“double”转换到“time_t”，可能丢失数据
+     1>e:\sync_directory\workspace\spdinv_cl\spdinv_cl\main.cpp(137): warning C4244: “=”: 从“double”转换到“time_t”，可能丢失数据
+     1>e:\sync_directory\workspace\spdinv_cl\spdinv_cl\main.cpp(115): warning C4101: “bakMat”: 未引用的局部变量
+     1>e:\sync_directory\workspace\spdinv_cl\spdinv_cl\main.cpp(376): warning C4101: “out”: 未引用的局部变量
+         data.cpp
+         cl_trigmat_mul.cpp
+     1>e:\sync_directory\workspace\spdinv_cl\spdinv_cl\cl_trigmat_mul.cpp(26): warning C4838: 从“int”转换到“size_t”需要收缩转换
+     1>e:\sync_directory\workspace\spdinv_cl\spdinv_cl\cl_trigmat_mul.cpp(14): warning C4101: “queue_device”: 未引用的局部变量
+         cl_trigmat_inv.cpp
+     1>e:\sync_directory\workspace\spdinv_cl\spdinv_cl\cl_trigmat_inv.cpp(36): warning C4838: 从“int”转换到“size_t”需要收缩转换
+     1>e:\sync_directory\workspace\spdinv_cl\spdinv_cl\cl_trigmat_inv.cpp(22): warning C4101: “queue_device”: 未引用的局部变量
+         cl_trigmat_copy.cpp
+     1>e:\sync_directory\workspace\spdinv_cl\spdinv_cl\cl_trigmat_copy.cpp(25): warning C4838: 从“int”转换到“size_t”需要收缩转换
+     1>e:\sync_directory\workspace\spdinv_cl\spdinv_cl\cl_trigmat_copy.cpp(14): warning C4101: “queue_device”: 未引用的局部变量
+         cl_SPD_inv.cpp
+         cl_gen_rand.cpp
+     1>e:\sync_directory\workspace\spdinv_cl\spdinv_cl\cl_gen_rand.cpp(32): warning C4838: 从“int”转换到“size_t”需要收缩转换
+     1>e:\sync_directory\workspace\spdinv_cl\spdinv_cl\cl_gen_rand.cpp(17): warning C4101: “queue_device”: 未引用的局部变量
+         cl_cholesky_mod.cpp
+     1>e:\sync_directory\workspace\spdinv_cl\spdinv_cl\cl_cholesky_mod.cpp(13): warning C4101: “inOffset”: 未引用的局部变量
+     1>e:\sync_directory\workspace\spdinv_cl\spdinv_cl\cl_cholesky_mod.cpp(110): warning C4838: 从“int”转换到“size_t”需要收缩转换
+     1>e:\sync_directory\workspace\spdinv_cl\spdinv_cl\cl_cholesky_mod.cpp(89): warning C4101: “debug”: 未引用的局部变量
+     1>e:\sync_directory\workspace\spdinv_cl\spdinv_cl\cl_cholesky_mod.cpp(180): warning C4838: 从“int”转换到“size_t”需要收缩转换
+         cl_common.cpp
+         cl_cholmod_blk.cpp
+     1>e:\sync_directory\workspace\spdinv_cl\spdinv_cl\cl_cholmod_blk.cpp(29): warning C4101: “data”: 未引用的局部变量
+         cl_cholesky.cpp
+     1>e:\sync_directory\workspace\spdinv_cl\spdinv_cl\cl_cholesky.cpp(38): warning C4838: 从“int”转换到“size_t”需要收缩转换
+         正在生成代码...
+       Link:
+         D:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"E:\sync_directory\workspace\SPDInv_CL\x64\Debug\SPDInv_cl.exe" /INCREMENTAL /NOLOGO OpenCL.lib clBLAS.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"E:\sync_directory\workspace\SPDInv_CL\x64\Debug\SPDInv_cl.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"E:\sync_directory\workspace\SPDInv_CL\x64\Debug\SPDInv_cl.lib" /MACHINE:X64 x64\Debug\cl_cholesky.obj
+         x64\Debug\cl_cholmod_blk.obj
+         x64\Debug\cl_common.obj
+         x64\Debug\cl_cholesky_mod.obj
+         x64\Debug\cl_gen_rand.obj
+         x64\Debug\cl_SPD_inv.obj
+         x64\Debug\cl_trigmat_copy.obj
+         x64\Debug\cl_trigmat_inv.obj
+         x64\Debug\cl_trigmat_mul.obj
+         x64\Debug\data.obj
+         x64\Debug\stdafx.obj
+         x64\Debug\main.obj
+         SPDInv_CL.vcxproj -> E:\sync_directory\workspace\SPDInv_CL\x64\Debug\SPDInv_cl.exe
+     1>已完成生成项目“E:\sync_directory\workspace\SPDInv_CL\SPDInv_CL\SPDInv_CL.vcxproj”(Build 个目标)的操作。
+
+已成功生成。
+
+已用时间 00:00:07.79

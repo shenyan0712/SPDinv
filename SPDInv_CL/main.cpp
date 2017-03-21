@@ -8,23 +8,30 @@
 #include <iostream> 
 #include <windows.h> 
 
+#include <clBLAS.h>
+
 #include "stdafx.h"
 #include "cl_common.h"
 #include "cl_spd_inv.h"
 #include "spd_inv.h"
 
+
 using namespace std;
 
 #define NUM_ITER			20
-#define NUM_TEST_PER_MAT	10
-#define MAX_MAT_SIZE  20000
+#define NUM_TEST_PER_MAT	30
+#define MAX_MAT_SIZE  10000
 #define MAX_BLK_SIZE	4
 
 time_t cur_tm, total_tm, tm_diff[NUM_TEST_PER_MAT];		//
+time_t copy_tm, cur_tm2;
 double av_tm;
 
 SPDInv_struct spdInvStruct;
 int blksize = 3;
+
+void clBLAS_test();
+
 
 void generate_spd(int size, dtype *spdMat)
 {
@@ -38,11 +45,11 @@ void generate_spd(int size, dtype *spdMat)
 	memset(spdMat, 0, sizeof(dtype)*size*size);
 
 	//generate lower triangular matrix
-	srand((unsigned)time(NULL));
+	//srand((unsigned)time(NULL));
 	for (i = 0;i < size;i++) {
 		ptr = Lmat + i*size;
 		for (j = 0;j <= i;j++) {
-			*ptr = rand()/65536 + 1;
+			*ptr = rand()/65536.0 + 1;
 			ptr++;
 		}
 	}
@@ -72,7 +79,10 @@ void generate_spd(int size, dtype *spdMat)
 			for (k = 0;k < size;k++) {
 				sum += (*(ptr_i+k))*(*(ptr_j+k));
 			}
-			*ptr_elem = sum;
+			if(i==j)
+				*ptr_elem = sum+100;
+			else
+				*ptr_elem = sum;
 		}
 	}
 
@@ -98,11 +108,13 @@ void cholesky_m1_test();
 int main()
 {
 	dtype ret;
+	clblasStatus stat;
 	cl_int err;
 	int matsize;
 
 	dtype *spdMat, *outMat, *bakMat;
 
+	//clBLAS_test();
 	//mod_cholesky_test();
 	//system("pause");
 	//return 0;
@@ -114,87 +126,148 @@ int main()
 
 
 	cl_SPDInv_setup(&spdInvStruct, MAX_MAT_SIZE, MAX_BLK_SIZE);
+	err = clblasSetup();
 
 
 	/**************************************/
 	/*************test********************/
 	for (int i = 1; i <= NUM_ITER; i++)
 	{
-		matsize = i*256;
+		copy_tm = 0.0;
+		total_tm = 0.0;
+		matsize = i * 120;		//120
 		//生成NxN的对称正定矩阵
-		generate_spd(matsize, spdMat);
-		//memcpy(bakMat, spdMat, sizeof(dtype)*matsize*matsize);
+		//generate_spd(matsize, spdMat);
 
-		///*
-		//test cholesky
+		gen_rand(spdInvStruct.queue, spdInvStruct.kern_gen_rand, spdInvStruct.buf_spd_B, matsize, NULL);
+		clEnqueueCopyBuffer(spdInvStruct.queue, spdInvStruct.buf_spd_B, spdInvStruct.buf_spd_A, 0, 0, sizeof(dtype)*matsize*matsize, 0, NULL, NULL);
+		//printBuf2D(stdout, spdInvStruct.queue, spdInvStruct.buf_spd_B, matsize, matsize, "origin:");
+		stat = clblasDtrmm(clblasRowMajor, clblasRight, clblasLower,	// B<--A*B, A是上三角, B是下三角
+			clblasTrans, clblasNonUnit, matsize, matsize,
+			1, spdInvStruct.buf_spd_B, 0, matsize,
+			spdInvStruct.buf_spd_A, 0, matsize,
+			1, &spdInvStruct.queue, 0, NULL, NULL);
+		clEnqueueReadBuffer(spdInvStruct.queue, spdInvStruct.buf_spd_A, CL_TRUE, 0, sizeof(dtype)*matsize*matsize, spdMat, 0, NULL, NULL);
+
+		/*
+		//***********************test cholesky***********************************
 		//*****warm up
-		err = clEnqueueWriteBuffer(spdInvStruct.queue, spdInvStruct.buf_spd_A, CL_TRUE, 0,
-			sizeof(dtype)*matsize*matsize, spdMat, 0, NULL, NULL);
 		ret = cholesky_m1(spdInvStruct.queue, spdInvStruct.kern_cholesky_m1,
-			spdInvStruct.buf_spd_A, spdInvStruct.buf_aux, spdInvStruct.buf_ret,
-			matsize, outMat,false);
+			spdInvStruct.buf_spd_A, spdInvStruct.buf_diagAux, spdInvStruct.buf_ret,
+			matsize, NULL);
+		if (ret == 1.0)
+		{
+		printf("chol failed.\n");
+		system("pause");
+		exit(1);
+		}
 		//*****
 		cur_tm = clock();
 		for (int j = 0; j < NUM_TEST_PER_MAT; j++) {
 			//copy data to buffer
+			cur_tm2 = clock();
 			err = clEnqueueWriteBuffer(spdInvStruct.queue, spdInvStruct.buf_spd_A, CL_TRUE, 0,
 				sizeof(dtype)*matsize*matsize, spdMat, 0, NULL, NULL);
 			clFlush(spdInvStruct.queue);
+			copy_tm = (clock() - cur_tm2);
 			ret = cholesky_m1(spdInvStruct.queue, spdInvStruct.kern_cholesky_m1,
-				spdInvStruct.buf_spd_A, spdInvStruct.buf_aux, spdInvStruct.buf_ret,
-				matsize, outMat, false);
+				spdInvStruct.buf_spd_A, spdInvStruct.buf_diagAux, spdInvStruct.buf_ret,
+				matsize, outMat);
 		}
 		total_tm = clock() - cur_tm;
-		av_tm = ((double)total_tm) / NUM_TEST_PER_MAT;
+		av_tm = ((double)(total_tm-copy_tm)) / NUM_TEST_PER_MAT;
 		printf("mat N=%d, av.tm=%lf\n",matsize, av_tm);
-		//*/
+		*/
 
 		/*
-		//test trigInv
+		//***************************************test trigInv****************************************
 		//*****warm up
-		err = clEnqueueWriteBuffer(spdInvStruct.queue, spdInvStruct.buf_spd_A, CL_TRUE, 0,
-			sizeof(dtype)*matsize*matsize, spdMat, 0, NULL, NULL);
-		clFlush(spdInvStruct.queue);
-		cholesky_m1(matsize, &spdInvStruct, outMat, true);
+		ret = cholesky_m1(spdInvStruct.queue,spdInvStruct.kern_cholesky_m1,spdInvStruct.buf_spd_A,spdInvStruct.buf_diagAux,
+			spdInvStruct.buf_ret, matsize, outMat);
+		if (ret != 0.0)
+		{
+			printf("chol failed.\n");
+			system("pause");
+			exit(1);
+		}
 		//*****
 		cur_tm = clock();
 		for (int j = 0; j < NUM_TEST_PER_MAT; j++) {
 			//copy data to buffer
+			cur_tm2 = clock();
 			err = clEnqueueWriteBuffer(spdInvStruct.queue, spdInvStruct.buf_spd_A, CL_TRUE, 0,
 				sizeof(dtype)*matsize*matsize, outMat, 0, NULL, NULL);
 			clFlush(spdInvStruct.queue);
 			checkErr(err, __FILE__, __LINE__);
-			trigMat_inv_m1(matsize, &spdInvStruct, outMat);
-			trigMat_mul(matsize, &spdInvStruct, outMat);
+			copy_tm += (clock() - cur_tm2);
+			trigMat_inv_m1(spdInvStruct.queue,spdInvStruct.kern_trigMat_inv_m1, spdInvStruct.buf_spd_A,spdInvStruct.buf_diagAux,
+			  spdInvStruct.buf_ret,	matsize, NULL);
 		}
 		total_tm = clock() - cur_tm;
-		av_tm = ((double)total_tm) / NUM_TEST_PER_MAT;
-		printf("mat N=%d, av.tm=%lf\n", matsize, av_tm);
+		av_tm = ((double)(total_tm- copy_tm)) / NUM_TEST_PER_MAT;
+		printf("mat N=%d, av.tm=%lf, copy_tm=%f\n", matsize, av_tm, (double)copy_tm/NUM_TEST_PER_MAT);
 		*/
 
-		/*
-		//test SPDInv
+		///*
+		//**************************************test SPDInv*********************************
 		//*****warm up
-		err = clEnqueueWriteBuffer(spdInvStruct.queue, spdInvStruct.buf_spd_A, CL_TRUE, 0,
-			sizeof(dtype)*matsize*matsize, spdMat, 0, NULL, NULL);
-		clFlush(spdInvStruct.queue);
-		cholesky_m1(matsize, &spdInvStruct, NULL, false);
-		//*****
+		//err = clEnqueueWriteBuffer(spdInvStruct.queue, spdInvStruct.buf_spd_A, CL_TRUE, 0,
+		//	sizeof(dtype)*matsize*matsize, spdMat, 0, NULL, NULL);
+		//clFlush(spdInvStruct.queue);
+		//printBuf2D(stdout, spdInvStruct.queue, spdInvStruct.buf_spd_A, matsize, matsize, "rand:");
+		ret=cholesky_m1(spdInvStruct.queue, spdInvStruct.kern_cholesky_m1,spdInvStruct.buf_spd_A, spdInvStruct.buf_diagAux,
+			spdInvStruct.buf_ret, matsize, NULL);
+		if (ret != 0.0)
+		{
+			printf("chol failed.\n");
+			system("pause");
+			exit(1);
+		}
+		//
 		cur_tm = clock();
 		for (int j = 0; j < NUM_TEST_PER_MAT; j++) {
 			//copy data to buffer
+			cur_tm2 = clock();
 			err = clEnqueueWriteBuffer(spdInvStruct.queue, spdInvStruct.buf_spd_A, CL_TRUE, 0,
 				sizeof(dtype)*matsize*matsize, spdMat, 0, NULL, NULL);
 			clFlush(spdInvStruct.queue);
 			checkErr(err, __FILE__, __LINE__);
-			cholesky_m1(matsize, &spdInvStruct, outMat, false);
-			trigMat_inv_m1(matsize, &spdInvStruct, outMat);
-			trigMat_mul(matsize, &spdInvStruct, outMat);
+			copy_tm += (clock() - cur_tm2);
+
+			ret=cholesky_m1(spdInvStruct.queue, spdInvStruct.kern_cholesky_m1, spdInvStruct.buf_spd_A, spdInvStruct.buf_diagAux,
+				spdInvStruct.buf_ret, matsize, NULL);
+			if (ret != 0.0)
+			{
+				printf("chol failed.\n");
+				system("pause");
+				exit(1);
+			}
+			trigMat_inv_m1(spdInvStruct.queue, spdInvStruct.kern_trigMat_inv_m1, spdInvStruct.buf_spd_A, spdInvStruct.buf_diagAux,
+				spdInvStruct.buf_ret, matsize, NULL);
+			
+			//used for CPU
+			//trigMat_mul(spdInvStruct.queue, spdInvStruct.kern_trigMat_mul, spdInvStruct.buf_spd_A, spdInvStruct.buf_diagAux, spdInvStruct.buf_spd_B,
+			//	matsize, NULL);
+
+			///*
+			//used for AMD GPU
+			trigMat_copy(spdInvStruct.queue, spdInvStruct.kern_trigMat_copy, spdInvStruct.buf_spd_A, spdInvStruct.buf_spd_B, matsize, NULL);
+			stat=clblasDtrmm(clblasRowMajor, clblasRight, clblasUpper,	// B<--A*B, A是上三角, B是下三角
+				clblasNoTrans, clblasDiag::clblasNonUnit, 4, 4,
+				1, spdInvStruct.buf_spd_A, 0, 4,
+				spdInvStruct.buf_spd_B, 0, 4,
+				1, &spdInvStruct.queue, 0, NULL, NULL);
+			if (stat != clblasStatus::clblasSuccess)
+			{
+				printf("trig mul failed.\n"); system("pause");
+				exit(1);
+			}
+			//*/
 		}
 		total_tm = clock() - cur_tm;
-		av_tm = ((double)total_tm) / NUM_TEST_PER_MAT;
-		printf("mat N=%d, av.tm=%lf\n", matsize, av_tm);
-		*/
+		av_tm = ((double)total_tm- copy_tm) / NUM_TEST_PER_MAT;
+		printf("mat N=%d, av.tm=%f, copy_tm=%f\n", matsize, av_tm, (dtype)copy_tm/ NUM_TEST_PER_MAT);
+		//*/
 	}
 
 	system("pause");
@@ -205,11 +278,11 @@ int main()
     return 0;
 }
 
-
+extern dtype A[30][30];
 void mod_cholesky_test()
 {
 	cl_int err;
-	int matsize = 18;
+	int matsize =30;
 	//dtype mat[3][3] = { {4,2,1},{2,6,6},{1,6,5} };
 	//dtype out[3][3];
 	/*
@@ -250,16 +323,16 @@ void mod_cholesky_test()
 		{-3.919537e+09, 6.779897e+09, -1.696211e+09, 3.576425e+11, 2.180138e+11, 4.881382e+10, -5.589093e+09, 1.027701e+10, -2.796901e+09, 5.582911e+11, 3.092367e+11, 1.672408e+10, -3.609125e+09, 7.998860e+09, -2.406232e+09, 4.537523e+11, 2.010886e+11, -1.212221e+10},
 		{-1.702177e+09, 3.159746e+09, -7.595233e+08, 1.664795e+11, 9.490048e+10, 2.348842e+10, -2.418958e+09, 4.726997e+09, -1.246227e+09, 2.565095e+11, 1.340604e+11, 8.820361e+09, -1.707527e+09, 3.539124e+09, -1.103243e+09, 2.010886e+11, 9.505777e+10, -6.293168e+09},
 		{9.931234e+07, -2.051712e+08, 4.652669e+07, -1.079211e+10, -5.558309e+09, -1.591724e+09, 1.403328e+08, -3.013017e+08, 7.576364e+07, -1.632441e+10, -7.798949e+09, -6.651589e+08, 1.131721e+08, -2.128073e+08, 6.999987e+07, -1.212221e+10, -6.293168e+09, 4.666134e+08} };
-	mat[3][3] = 100;
+	mat[0][0] = 100;
 	//*/
 
-	dtype out[18][18];
-	dtype diag[18];
+	dtype out[30][30];
+	dtype diag[30];
 
 	cl_SPDInv_setup(&spdInvStruct, MAX_MAT_SIZE, MAX_BLK_SIZE);
 
 	err = clEnqueueWriteBuffer(spdInvStruct.queue, spdInvStruct.buf_spd_A, CL_TRUE, 0,
-		sizeof(dtype)*matsize*matsize,(void*)mat, 0, NULL, NULL);
+		sizeof(dtype)*matsize*matsize,(void*)A, 0, NULL, NULL);
 	checkErr(err, __FILE__, __LINE__);
 	clFlush(spdInvStruct.queue);
 
@@ -268,8 +341,8 @@ void mod_cholesky_test()
 	//	matsize, (dtype*)out, true);
 
 	cholmod_blk(spdInvStruct.queue, spdInvStruct.kern_cholmod_blk, spdInvStruct.kern_mat_max,
-		spdInvStruct.buf_spd_A, spdInvStruct.buf_aux, spdInvStruct.buf_diag, spdInvStruct.buf_backup, spdInvStruct.buf_ret,
-		matsize, (dtype*)out, true);
+		spdInvStruct.buf_spd_A, spdInvStruct.buf_blkBackup, spdInvStruct.buf_diagAux, spdInvStruct.buf_diag,  spdInvStruct.buf_ret,
+		matsize, (dtype*)out);
 
 	compute_cholmod_E(spdInvStruct.queue, spdInvStruct.kern_cholmod_E,
 		spdInvStruct.buf_spd_A, spdInvStruct.buf_diag, matsize, (dtype*)diag);
@@ -278,5 +351,61 @@ void mod_cholesky_test()
 	for (int c = 0; c < matsize; c++)
 		printf("%le\t", diag[c]);
 	printf("\n");
+
+}
+
+
+void clBLAS_test()
+{
+	cl_int err;
+	size_t lda = 4;
+	dtype A[4 * 4] = {
+		1,2,3,4,
+		0,6,7,8,
+		0,0,11,12,
+		0,0,0,16,
+	};
+
+	dtype B[4 * 4] = {
+		1,2,3,4,
+		5,6,7,8,
+		9,10,11,12,
+		13,14,15,16,
+	};
+
+	dtype out[4 * 4];
+
+	cl_SPDInv_setup(&spdInvStruct, MAX_MAT_SIZE, MAX_BLK_SIZE);
+	clblasSetup();
+
+	err = clEnqueueWriteBuffer(spdInvStruct.queue, spdInvStruct.buf_spd_A, CL_TRUE, 0,
+		sizeof(dtype)*4*4, (void*)A, 0, NULL, NULL);
+	err = clEnqueueWriteBuffer(spdInvStruct.queue, spdInvStruct.buf_spd_B, CL_TRUE, 0,
+		sizeof(dtype) * 4 * 4, (void*)B, 0, NULL, NULL);
+	//err = clEnqueueCopyBuffer(spdInvStruct.queue, spdInvStruct.buf_spd_A, spdInvStruct.buf_spd_B,0,0, sizeof(dtype) * 4 * 4,0,NULL,NULL);
+
+	checkErr(err, __FILE__, __LINE__);
+	clFlush(spdInvStruct.queue);
+	printBuf2D(stdout, spdInvStruct.queue, spdInvStruct.buf_spd_A, 4, 4, "A:");
+
+	/*
+	clblasDgemm(clblasRowMajor, clblasNoTrans, clblasNoTrans,
+		4, 4, 4,
+		1,spdInvStruct.buf_spd_A, 0, lda,
+		spdInvStruct.buf_spd_A, 0, lda,
+		1,spdInvStruct.buf_spd_B, 0, lda,
+		1, &spdInvStruct.queue, 0, NULL, NULL);
+	*/
+	clblasDtrmm(clblasRowMajor, clblasRight, clblasUpper,
+		clblasTrans, clblasDiag::clblasNonUnit, 4, 4,
+		1, spdInvStruct.buf_spd_B, 0, 4,
+		spdInvStruct.buf_spd_A, 0, 4,
+		1, &spdInvStruct.queue, 0, NULL, NULL);
+
+
+
+	printBuf2D(stdout, spdInvStruct.queue, spdInvStruct.buf_spd_A, 4, 4, "out:");
+
+
 
 }
